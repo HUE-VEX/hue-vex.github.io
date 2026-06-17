@@ -1,9 +1,3 @@
-const serviceLinks = {
-    forum: "https://f.hue.org.cn/",
-    drive: "https://wp.wdsj.host/s/dPUj",
-    github: "https://github.com/hue-vex"
-};
-
 const navToggle = document.getElementById("navToggle");
 const siteNav = document.getElementById("siteNav");
 
@@ -27,16 +21,6 @@ if (navToggle && siteNav) {
         link.addEventListener("click", closeNavigation);
     });
 }
-
-document.querySelectorAll("[data-link-key]").forEach((link) => {
-    const key = link.getAttribute("data-link-key");
-    const url = serviceLinks[key];
-
-    if (url) {
-        link.setAttribute("href", url);
-    }
-
-});
 
 document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
