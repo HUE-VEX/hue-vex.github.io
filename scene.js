@@ -206,6 +206,212 @@ if (canvas) {
     );
     field.add(pathLine);
 
+    const bezierPoints = [
+        pathCurve.v0,
+        pathCurve.v1,
+        pathCurve.v2,
+        pathCurve.v3
+    ];
+
+    const bezierControlLines = createLineSegments([
+        pathCurve.v0, pathCurve.v1,
+        pathCurve.v2, pathCurve.v3
+    ], new THREE.LineBasicMaterial({
+        color: 0xf8fbff,
+        transparent: true,
+        opacity: 0.22,
+        blending: THREE.AdditiveBlending
+    }));
+    field.add(bezierControlLines);
+
+    const bezierNodes = bezierPoints.map((point, index) => {
+        const node = new THREE.Mesh(
+            new THREE.CylinderGeometry(index === 0 || index === 3 ? 0.09 : 0.065, index === 0 || index === 3 ? 0.09 : 0.065, 0.035, 24),
+            new THREE.MeshBasicMaterial({
+                color: index === 0 || index === 3 ? 0x22c55e : 0xf8fbff,
+                transparent: true,
+                opacity: index === 0 || index === 3 ? 0.84 : 0.46,
+                blending: THREE.AdditiveBlending
+            })
+        );
+        node.position.copy(point);
+        node.position.y += 0.02;
+        field.add(node);
+        return node;
+    });
+
+    const rememberBaseOpacity = (object) => {
+        object.traverse((child) => {
+            if (!child.material) {
+                return;
+            }
+            const materials = Array.isArray(child.material) ? child.material : [child.material];
+            materials.forEach((material) => {
+                material.transparent = true;
+                material.userData.baseOpacity = material.opacity;
+            });
+        });
+    };
+
+    const setVehicleOpacity = (vehicle, opacity) => {
+        vehicle.chassis.visible = opacity > 0.012;
+        vehicle.chassis.traverse((child) => {
+            if (!child.material) {
+                return;
+            }
+            const materials = Array.isArray(child.material) ? child.material : [child.material];
+            materials.forEach((material) => {
+                const baseOpacity = material.userData.baseOpacity ?? material.opacity;
+                material.opacity = baseOpacity * opacity;
+            });
+        });
+    };
+
+    const createBaseVehicle = (accentColor = 0x38bdf8, bodyOpacity = 0.48) => {
+        const chassis = new THREE.Group();
+        const bodyMaterial = new THREE.MeshBasicMaterial({
+            color: accentColor,
+            transparent: true,
+            opacity: bodyOpacity,
+            blending: THREE.AdditiveBlending
+        });
+        const edgeMaterial = new THREE.LineBasicMaterial({
+            color: 0xf8fbff,
+            transparent: true,
+            opacity: 0.74,
+            blending: THREE.AdditiveBlending
+        });
+
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.07, 0.5), bodyMaterial);
+        body.position.y = 0.07;
+        chassis.add(body);
+        body.add(new THREE.LineSegments(new THREE.EdgesGeometry(body.geometry), edgeMaterial));
+
+        const direction = createLine([
+            new THREE.Vector3(0, 0.15, 0),
+            new THREE.Vector3(0, 0.15, 0.42)
+        ], new THREE.LineBasicMaterial({
+            color: accentColor,
+            transparent: true,
+            opacity: 0.95,
+            blending: THREE.AdditiveBlending
+        }));
+        chassis.add(direction);
+
+        const halo = new THREE.Mesh(
+            new THREE.RingGeometry(0.48, 0.52, 48),
+            new THREE.MeshBasicMaterial({
+                color: accentColor,
+                transparent: true,
+                opacity: 0.25,
+                blending: THREE.AdditiveBlending,
+                side: THREE.DoubleSide,
+                depthWrite: false
+            })
+        );
+        halo.rotation.x = -Math.PI / 2;
+        halo.position.y = 0.012;
+        chassis.add(halo);
+
+        return { chassis, edgeMaterial, halo };
+    };
+
+    const createXDriveChassis = () => {
+        const { chassis, edgeMaterial, halo } = createBaseVehicle(0x0ea5e9, 0.48);
+        const wheelMaterial = new THREE.MeshBasicMaterial({
+            color: 0x22c55e,
+            transparent: true,
+            opacity: 0.82,
+            blending: THREE.AdditiveBlending
+        });
+
+        const wheelPositions = [
+            [-0.34, 0.06, -0.34, Math.PI / 4],
+            [0.34, 0.06, -0.34, -Math.PI / 4],
+            [-0.34, 0.06, 0.34, -Math.PI / 4],
+            [0.34, 0.06, 0.34, Math.PI / 4]
+        ];
+
+        const wheels = wheelPositions.map(([x, y, z, angle]) => {
+            const wheel = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.09, 0.34), wheelMaterial);
+            wheel.position.set(x, y, z);
+            wheel.rotation.y = angle;
+            chassis.add(wheel);
+
+            const wheelEdges = new THREE.LineSegments(new THREE.EdgesGeometry(wheel.geometry), edgeMaterial.clone());
+            wheelEdges.material.opacity = 0.58;
+            wheel.add(wheelEdges);
+            return wheel;
+        });
+
+        rememberBaseOpacity(chassis);
+        return { chassis, wheels, halo, type: "xdrive" };
+    };
+
+    const createTankChassis = () => {
+        const { chassis, edgeMaterial, halo } = createBaseVehicle(0x2563eb, 0.5);
+        const treadMaterial = new THREE.MeshBasicMaterial({
+            color: 0x7dd3fc,
+            transparent: true,
+            opacity: 0.72,
+            blending: THREE.AdditiveBlending
+        });
+
+        const treads = [-0.33, 0.33].map((x) => {
+            const tread = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.11, 0.72), treadMaterial);
+            tread.position.set(x, 0.06, 0);
+            chassis.add(tread);
+            const treadEdges = new THREE.LineSegments(new THREE.EdgesGeometry(tread.geometry), edgeMaterial.clone());
+            treadEdges.material.opacity = 0.5;
+            tread.add(treadEdges);
+            return tread;
+        });
+
+        rememberBaseOpacity(chassis);
+        return { chassis, treads, halo, type: "tank" };
+    };
+
+    const createSwerveChassis = () => {
+        const { chassis, edgeMaterial, halo } = createBaseVehicle(0x22c55e, 0.44);
+        const moduleMaterial = new THREE.MeshBasicMaterial({
+            color: 0x38bdf8,
+            transparent: true,
+            opacity: 0.74,
+            blending: THREE.AdditiveBlending
+        });
+        const wheelMaterial = new THREE.MeshBasicMaterial({
+            color: 0xf8fbff,
+            transparent: true,
+            opacity: 0.72,
+            blending: THREE.AdditiveBlending
+        });
+
+        const modules = [
+            [-0.31, -0.31],
+            [0.31, -0.31],
+            [-0.31, 0.31],
+            [0.31, 0.31]
+        ].map(([x, z]) => {
+            const module = new THREE.Group();
+            module.position.set(x, 0.07, z);
+            chassis.add(module);
+
+            const pod = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.08, 22), moduleMaterial);
+            pod.rotation.x = Math.PI / 2;
+            module.add(pod);
+
+            const wheel = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.24), wheelMaterial);
+            wheel.position.y = -0.01;
+            module.add(wheel);
+            wheel.add(new THREE.LineSegments(new THREE.EdgesGeometry(wheel.geometry), edgeMaterial.clone()));
+
+            return { module, wheel };
+        });
+
+        rememberBaseOpacity(chassis);
+        return { chassis, modules, halo, type: "swerve" };
+    };
+
     const secondaryPaths = [
         [
             new THREE.Vector3(-3.5, -0.46, 1.85),
@@ -234,19 +440,21 @@ if (canvas) {
         return { curve, line };
     });
 
-    const movingMarkers = [0, 0.28, 0.56, 0.82].map((offset, index) => {
-        const marker = new THREE.Mesh(
-            new THREE.SphereGeometry(index === 0 ? 0.13 : 0.075, 24, 16),
-            new THREE.MeshBasicMaterial({
-                color: index === 0 ? 0x22c55e : 0x7dd3fc,
-                transparent: true,
-                opacity: index === 0 ? 0.95 : 0.6,
-                blending: THREE.AdditiveBlending
-            })
-        );
-        field.add(marker);
-        return { marker, offset };
+    const vehicles = [
+        createTankChassis(),
+        createXDriveChassis(),
+        createSwerveChassis()
+    ];
+    vehicles.forEach((vehicle) => {
+        field.add(vehicle.chassis);
+        setVehicleOpacity(vehicle, 0);
     });
+
+    const clamp01 = (value) => Math.min(1, Math.max(0, value));
+    const smoothstep = (edge0, edge1, value) => {
+        const t = clamp01((value - edge0) / (edge1 - edge0));
+        return t * t * (3 - 2 * t);
+    };
 
     const scanRings = [1.1, 1.75, 2.4, 3.1].map((radius, index) => {
         const ring = new THREE.Mesh(
@@ -385,12 +593,47 @@ if (canvas) {
             point.material.opacity = 0.55 + pulse * 0.26;
         });
 
-        movingMarkers.forEach(({ marker, offset }, index) => {
-            const t = (elapsed * 0.07 * motionScale + offset) % 1;
-            const p = pathCurve.getPointAt(t);
-            marker.position.copy(p);
-            marker.position.y += 0.12 + index * 0.012;
-            marker.material.opacity = index === 0 ? 0.92 : 0.38 + Math.sin(elapsed * 2 + index) * 0.12;
+        const segmentDuration = reducedMotion ? 18 : 12;
+        const sequenceTime = (elapsed * motionScale) / segmentDuration;
+        const activeIndex = Math.floor(sequenceTime) % vehicles.length;
+        const segmentProgress = sequenceTime - Math.floor(sequenceTime);
+        const travelT = smoothstep(0.08, 0.9, segmentProgress);
+        const vehicleFade = smoothstep(0.02, 0.16, segmentProgress) * (1 - smoothstep(0.84, 0.98, segmentProgress));
+        const chassisPosition = pathCurve.getPointAt(travelT);
+        const chassisTangent = pathCurve.getTangentAt(travelT);
+        const heading = Math.atan2(chassisTangent.x, chassisTangent.z);
+
+        vehicles.forEach((vehicle, index) => {
+            const easedOpacity = index === activeIndex ? vehicleFade : 0;
+
+            vehicle.chassis.position.copy(chassisPosition);
+            vehicle.chassis.position.y += 0.12 + index * 0.006;
+            vehicle.chassis.rotation.y = heading;
+            vehicle.chassis.scale.setScalar((0.88 + Math.sin(elapsed * 3.2 + index) * 0.025) * (0.96 + easedOpacity * 0.04));
+            setVehicleOpacity(vehicle, easedOpacity);
+
+            if (vehicle.halo) {
+                vehicle.halo.rotation.z += delta * (1.2 + index * 0.28) * motionScale;
+            }
+
+            if (vehicle.type === "tank") {
+                vehicle.treads.forEach((tread, treadIndex) => {
+                    tread.scale.z = 1 + Math.sin(elapsed * 8 + treadIndex * Math.PI) * 0.06;
+                });
+            }
+
+            if (vehicle.type === "xdrive") {
+                vehicle.wheels.forEach((wheel, wheelIndex) => {
+                    wheel.scale.z = 1 + Math.sin(elapsed * 7 + wheelIndex) * 0.08;
+                });
+            }
+
+            if (vehicle.type === "swerve") {
+                vehicle.modules.forEach(({ module, wheel }, moduleIndex) => {
+                    module.rotation.y = Math.sin(elapsed * 1.8 + moduleIndex * 0.8) * 0.42;
+                    wheel.scale.z = 1 + Math.sin(elapsed * 8 + moduleIndex) * 0.06;
+                });
+            }
         });
 
         pathLine.material.opacity = 0.52 + Math.sin(elapsed * 1.6) * 0.14;
@@ -406,6 +649,12 @@ if (canvas) {
         scanRings.forEach((ring, index) => {
             ring.rotation.z += delta * (0.12 + index * 0.035) * motionScale;
             ring.material.opacity = 0.09 + Math.sin(elapsed * 1.1 + index * 0.7) * 0.045;
+        });
+
+        bezierNodes.forEach((node, index) => {
+            const pulse = 0.9 + Math.sin(elapsed * 2.2 + index) * 0.12;
+            node.scale.set(pulse, 1, pulse);
+            node.material.opacity = (index === 0 || index === 3 ? 0.68 : 0.34) + Math.sin(elapsed * 1.8 + index) * 0.08;
         });
 
         statusSprites.forEach((sprite, index) => {
