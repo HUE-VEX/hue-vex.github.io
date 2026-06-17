@@ -279,16 +279,6 @@ h3 {
     color: var(--text);
 }
 
-[aria-disabled="true"] {
-    cursor: not-allowed;
-}
-
-.button[aria-disabled="true"],
-.service-card[aria-disabled="true"],
-.status-row[aria-disabled="true"] {
-    opacity: 0.68;
-}
-
 .status-panel {
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -366,11 +356,6 @@ h3 {
     font-size: 0.98rem;
 }
 
-.service-copy small {
-    color: var(--muted);
-    font-size: 0.88rem;
-}
-
 .row-arrow {
     color: var(--soft);
     font-size: 1.55rem;
@@ -383,19 +368,10 @@ h3 {
     border-top: 1px solid var(--border);
 }
 
-.section-muted {
-    background: var(--surface-muted);
-}
-
 .section-heading {
     max-width: 660px;
     margin: 0 auto 28px;
     text-align: center;
-}
-
-.section-heading.align-left {
-    margin: 0;
-    text-align: left;
 }
 
 .section-heading p:not(.eyebrow) {
@@ -410,7 +386,7 @@ h3 {
 }
 
 .service-card {
-    min-height: 228px;
+    min-height: 156px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -437,54 +413,10 @@ h3 {
     text-transform: uppercase;
 }
 
-.service-card p {
-    margin-bottom: 24px;
-    color: var(--muted);
-}
-
 .card-link {
     margin-top: auto;
     color: var(--primary);
     font-weight: 800;
-}
-
-.workspace-layout {
-    display: grid;
-    grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
-    gap: 48px;
-    align-items: start;
-}
-
-.team-table {
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--surface);
-    overflow: hidden;
-}
-
-.team-row {
-    display: grid;
-    grid-template-columns: 132px minmax(0, 1fr);
-    gap: 18px;
-    align-items: baseline;
-    padding: 18px 20px;
-    border-bottom: 1px solid var(--border);
-}
-
-.team-row:last-child {
-    border-bottom: 0;
-}
-
-.team-row span {
-    color: var(--primary);
-    font-size: 0.82rem;
-    font-weight: 850;
-    text-transform: uppercase;
-}
-
-.team-row strong {
-    font-size: 0.98rem;
-    font-weight: 650;
 }
 
 .process-grid {
@@ -566,8 +498,7 @@ h3 {
 }
 
 @media (max-width: 900px) {
-    .hero-grid,
-    .workspace-layout {
+    .hero-grid {
         grid-template-columns: 1fr;
     }
 
@@ -655,11 +586,6 @@ h3 {
     .service-card,
     .process-item {
         min-height: auto;
-    }
-
-    .team-row {
-        grid-template-columns: 1fr;
-        gap: 4px;
     }
 
     .join-inner,

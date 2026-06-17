@@ -1,6 +1,6 @@
 const serviceLinks = {
-    forum: "#",
-    drive: "#",
+    forum: "https://f.hue.org.cn/",
+    drive: "https://wp.wdsj.host/s/dPUj",
     github: "https://github.com/hue-vex"
 };
 
@@ -36,13 +36,6 @@ document.querySelectorAll("[data-link-key]").forEach((link) => {
         link.setAttribute("href", url);
     }
 
-    if (!url || url === "#") {
-        link.setAttribute("aria-disabled", "true");
-        link.setAttribute("title", "待配置校内服务地址");
-        link.addEventListener("click", (event) => {
-            event.preventDefault();
-        });
-    }
 });
 
 document.addEventListener("keydown", (event) => {
