@@ -86,11 +86,45 @@ if (canvas) {
         return plane;
     };
 
+    const fitText = (context, text, maxWidth, fontSize, minFontSize, weight = 600) => {
+        let size = fontSize;
+        const fontFamily = "system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
+
+        while (size > minFontSize) {
+            context.font = `${weight} ${size}px ${fontFamily}`;
+            if (context.measureText(text).width <= maxWidth) {
+                return size;
+            }
+            size -= 1;
+        }
+
+        context.font = `${weight} ${minFontSize}px ${fontFamily}`;
+        return minFontSize;
+    };
+
+    const splitFormulaText = (context, text, maxWidth) => {
+        if (context.measureText(text).width <= maxWidth) {
+            return [text];
+        }
+
+        const breakIndex = text.lastIndexOf("+", Math.floor(text.length * 0.58));
+        if (breakIndex === -1) {
+            return [text];
+        }
+
+        return [
+            text.slice(0, breakIndex + 1),
+            text.slice(breakIndex + 1)
+        ];
+    };
+
     const createLabelTexture = (title, subtitle = "", accent = "#7dd3fc") => {
         const textureCanvas = document.createElement("canvas");
-        textureCanvas.width = 512;
-        textureCanvas.height = subtitle ? 160 : 112;
+        textureCanvas.width = 640;
+        textureCanvas.height = subtitle ? 192 : 112;
         const context = textureCanvas.getContext("2d");
+        const contentX = 34;
+        const contentWidth = textureCanvas.width - contentX * 2;
 
         context.clearRect(0, 0, textureCanvas.width, textureCanvas.height);
         context.fillStyle = "rgba(7, 17, 31, 0.64)";
@@ -107,10 +141,15 @@ if (canvas) {
 
         if (subtitle) {
             context.fillStyle = "rgba(226, 239, 255, 0.84)";
-            context.font = "600 22px system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif";
-            context.fillText(subtitle, 34, 100);
+            fitText(context, subtitle, contentWidth, 22, 15);
+            const subtitleLines = splitFormulaText(context, subtitle, contentWidth);
+            const lineHeight = subtitleLines.length > 1 ? 24 : 28;
+            subtitleLines.forEach((line, index) => {
+                fitText(context, line, contentWidth, subtitleLines.length > 1 ? 18 : 22, 15);
+                context.fillText(line, contentX, 100 + index * lineHeight);
+            });
             context.fillStyle = "rgba(34, 197, 94, 0.84)";
-            context.fillRect(34, 122, 160, 8);
+            context.fillRect(contentX, subtitleLines.length > 1 ? 150 : 132, 160, 8);
         }
 
         const texture = new THREE.CanvasTexture(textureCanvas);
@@ -503,7 +542,7 @@ if (canvas) {
         createSprite("FIELD MAP", "PATH ONLINE", new THREE.Vector3(2.5, 2.9, -2.9), new THREE.Vector3(1.9, 0.6, 1), "#7dd3fc"),
         createSprite("AUTO ROUTE", "7 NODES LOCKED", new THREE.Vector3(4.55, 1.65, 0.6), new THREE.Vector3(1.75, 0.56, 1), "#22c55e"),
         createSprite("HUE-VEX", "CONTROL SURFACE", new THREE.Vector3(1.0, 3.72, -2.6), new THREE.Vector3(2.2, 0.68, 1), "#f8fbff"),
-        createSprite("BEZIER PATH", "B(t)=(1-t)^3P0+3(1-t)^2tP1+3(1-t)t^2P2+t^3P3", new THREE.Vector3(-1.0, 2.12, 2.82), new THREE.Vector3(3.0, 0.56, 1), "#7dd3fc")
+        createSprite("BEZIER PATH", "B(t)=(1-t)^3P0+3(1-t)^2tP1+3(1-t)t^2P2+t^3P3", new THREE.Vector3(-1.0, 2.12, 2.82), new THREE.Vector3(3.1, 0.94, 1), "#7dd3fc")
     ];
 
     const particleGeometry = new THREE.BufferGeometry();
