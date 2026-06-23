@@ -586,3 +586,13 @@ h3 {
         grid-column: 2;
     }
 }
+.contact-hint {
+  font-size: 0.85em;
+  color: #6b7280;
+  margin: 0 0 4px;
+}
+.contact-hint--warn {
+  color: #b91c1c;
+  font-weight: 600;
+  margin-top: -4px;
+}
